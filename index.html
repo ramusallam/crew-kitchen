@@ -71,6 +71,15 @@ input,select,textarea{font-family:var(--font-sans);font-size:16px;color:var(--te
 .fav{color:var(--textWarmMuted);background:none;border:none;padding:2px;flex-shrink:0}
 .fav.on{color:var(--accentYellow)}
 
+.card .cover{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;display:block}
+.photo-strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.photo-thumb{position:relative;width:64px;height:64px;border-radius:10px;overflow:hidden;border:1px solid var(--borderColor)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(28,25,23,.65);color:#fff;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.detail-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.detail-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block}
+.sync-dot.on{background:var(--accentGreen)}
 .find-status{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--textWarmMuted);margin:2px 0 14px;min-height:1em}
 .find-card{padding:0;overflow:hidden}
 .find-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--borderSubtle)}
@@ -253,23 +262,173 @@ input,select,textarea{font-family:var(--font-sans);font-size:16px;color:var(--te
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     Restore
   </button>
+  <button onclick="openSyncModal()">
+    <span class="sync-dot" id="sync-dot"></span>
+    Sync
+  </button>
   <input type="file" id="import-file" accept=".json" hidden onchange="importData(this)">
 </footer>
 
 <div class="modal-bg" id="modal-bg" hidden><div class="modal" id="modal"></div></div>
 
 <script>
-/* ── Store: swap these two functions for Firebase later; everything else stays. ── */
+/* ── Store: localStorage always, plus cloud sync (Vercel Blob) when a sync key is set. ── */
+const API_BASE = location.hostname === 'localhost' ? 'https://crew-kitchen.vercel.app/api' : '/api';
+const EMPTY = () => ({ recipes: [], cooks: [], plants: [] });
 const Store = {
   key: 'crew-kitchen-v1',
-  load() {
-    try { return JSON.parse(localStorage.getItem(this.key)) || { recipes: [], cooks: [], plants: [] }; }
-    catch { return { recipes: [], cooks: [], plants: [] }; }
+  keyName: 'crew-apps-sync',
+  syncKey() { return localStorage.getItem(this.keyName) || ''; },
+  setSyncKey(k) { k ? localStorage.setItem(this.keyName, k) : localStorage.removeItem(this.keyName); },
+  loadLocal() {
+    try { return JSON.parse(localStorage.getItem(this.key)) || EMPTY(); }
+    catch { return EMPTY(); }
   },
-  save(d) { localStorage.setItem(this.key, JSON.stringify(d)); }
+  save(d) {
+    localStorage.setItem(this.key, JSON.stringify(d));
+    this.push(d);
+  },
+  _t: null,
+  push(d) {
+    if (!this.syncKey()) return;
+    clearTimeout(this._t);
+    this._t = setTimeout(() => {
+      fetch(API_BASE + '/state?key=' + encodeURIComponent(this.syncKey()), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d)
+      }).catch(() => {});
+    }, 800);
+  },
+  async pull() {
+    if (!this.syncKey()) return null;
+    try {
+      const r = await fetch(API_BASE + '/state?key=' + encodeURIComponent(this.syncKey()));
+      if (r.status === 404) return 'empty';
+      if (!r.ok) return null;
+      return await r.json();
+    } catch { return null; }
+  }
 };
 
-let db = Store.load();
+let db = Store.loadLocal();
+
+async function initSync() {
+  const hashKey = new URLSearchParams(location.hash.slice(1)).get('key');
+  if (hashKey) { Store.setSyncKey(hashKey); history.replaceState(null, '', location.pathname); }
+  updateSyncUI();
+  if (!Store.syncKey()) return;
+  const cloud = await Store.pull();
+  if (cloud === 'empty') Store.push(db);
+  else if (cloud) {
+    db = mergeStates(cloud, db);
+    localStorage.setItem(Store.key, JSON.stringify(db));
+    Store.push(db);
+    render();
+  }
+}
+
+/* Union by id so turning sync on never loses local work; cloud wins on conflicts. */
+function mergeStates(cloud, local) {
+  const out = EMPTY();
+  for (const k of Object.keys(out)) {
+    const c = cloud[k] || [], l = local[k] || [];
+    const ids = new Set(c.map(x => x.id));
+    out[k] = [...c, ...l.filter(x => !ids.has(x.id))];
+  }
+  return out;
+}
+
+function updateSyncUI() {
+  document.getElementById('sync-dot').classList.toggle('on', !!Store.syncKey());
+}
+
+function openSyncModal(note) {
+  const k = Store.syncKey();
+  if (k) {
+    openModal(`
+      <div class="kick">Sync</div>
+      <h2>Sync is on</h2>
+      <p style="color:var(--textSecondary);font-size:.92rem;margin-top:10px">Every change saves to the cloud, and the app pulls the latest each time it opens, on any device.</p>
+      <div class="field"><label>Sync key</label><input value="${esc(k)}" readonly onclick="this.select()"></div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" onclick="syncOff()">Turn off</button>
+        <div class="right">
+          <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+          <button class="btn btn-primary" id="copy-link-btn" onclick="copySyncLink()">Copy link for another device</button>
+        </div>
+      </div>`);
+  } else {
+    openModal(`
+      <div class="kick">Sync</div>
+      <h2>Turn on sync</h2>
+      <p style="color:var(--textSecondary);font-size:.92rem;margin-top:10px">${esc(note || 'Enter the sync key to save everything to the cloud and use the app on any device.')}</p>
+      <div class="field"><label>Sync key</label><input id="sync-key-input" placeholder="Paste the key"></div>
+      <div class="modal-actions">
+        <div class="right">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="syncSaveKey()">Turn on</button>
+        </div>
+      </div>`);
+    document.getElementById('sync-key-input').focus();
+  }
+}
+function syncSaveKey() {
+  const k = document.getElementById('sync-key-input').value.trim();
+  if (!k) return;
+  Store.setSyncKey(k);
+  closeModal(); initSync();
+}
+function syncOff() { Store.setSyncKey(''); closeModal(); updateSyncUI(); }
+function copySyncLink() {
+  navigator.clipboard.writeText(location.origin + location.pathname + '#key=' + Store.syncKey());
+  document.getElementById('copy-link-btn').textContent = 'Copied';
+}
+
+/* ── Photos ── */
+let formPhotos = [];
+function renderPhotoStrip() {
+  const el = document.getElementById('photo-strip');
+  if (el) el.innerHTML = formPhotos.map((u,i) =>
+    `<div class="photo-thumb"><img src="${esc(u)}" alt=""><button type="button" onclick="removePhoto(${i})" aria-label="Remove photo">&times;</button></div>`).join('');
+}
+function removePhoto(i) { formPhotos.splice(i, 1); renderPhotoStrip(); }
+function pickPhotos() {
+  if (!Store.syncKey()) { closeModal(); openSyncModal('Photos live in the cloud, so sync needs to be on first.'); return; }
+  document.getElementById('photo-file').click();
+}
+async function onPhotosPicked(input) {
+  const files = [...input.files]; input.value = '';
+  const btn = document.getElementById('photo-add-btn');
+  btn.disabled = true; btn.textContent = 'Uploading...';
+  for (const f of files) {
+    try { formPhotos.push(await uploadPhoto(f)); renderPhotoStrip(); }
+    catch { btn.textContent = 'One photo failed'; }
+  }
+  btn.disabled = false; btn.textContent = 'Add photos';
+}
+async function compressImage(file) {
+  const img = await createImageBitmap(file).catch(() => null);
+  if (!img) return file;
+  const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+  if (scale === 1 && file.size < 1500000) return file;
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return await new Promise(r => c.toBlob(b => r(b || file), 'image/jpeg', 0.82));
+}
+async function uploadPhoto(file) {
+  const small = await compressImage(file);
+  const res = await fetch(API_BASE + '/upload?key=' + encodeURIComponent(Store.syncKey()) + '&filename=' + encodeURIComponent(file.name || 'photo.jpg'),
+    { method: 'POST', headers: { 'Content-Type': small.type || 'image/jpeg' }, body: small });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'upload failed');
+  return data.url;
+}
+const PHOTO_FIELD = `
+  <div class="field"><label>Photos</label>
+    <div class="photo-strip" id="photo-strip"></div>
+    <button type="button" class="btn btn-ghost" id="photo-add-btn" onclick="pickPhotos()">Add photos</button>
+    <input type="file" id="photo-file" accept="image/*" multiple hidden onchange="onPhotosPicked(this)">
+  </div>`;
 let activeTag = null;
 let searchQ = '';
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -313,6 +472,7 @@ function renderRecipes(){
   const grid = document.getElementById('recipe-grid');
   grid.innerHTML = list.map(r => `
     <div class="card" onclick="openRecipeDetail('${r.id}')">
+      ${(r.photos||[])[0] ? `<img class="cover" src="${esc(r.photos[0])}" alt="" loading="lazy">` : ''}
       <h3>${esc(r.title)}
         <button class="fav ${r.fav?'on':''}" onclick="event.stopPropagation();toggleFav('${r.id}')" aria-label="Favorite">${ICON_STAR(r.fav)}</button>
       </h3>
@@ -389,6 +549,7 @@ function openRecipeForm(id){
     <div class="field"><label>Tags (comma separated)</label><input id="f-tags" value="${r?esc(r.tags.join(', ')):''}" placeholder="pasta, weeknight, crew favorite"></div>
     <div class="field"><label>Ingredients (one per line)</label><textarea id="f-ing" placeholder="2 lb tomatoes&#10;1 head garlic">${r?esc(r.ingredients.join('\n')):''}</textarea></div>
     <div class="field"><label>Steps (one per line)</label><textarea id="f-steps" placeholder="Roast the tomatoes&#10;Simmer 30 min">${r?esc(r.steps.join('\n')):''}</textarea></div>
+    ${PHOTO_FIELD}
     <div class="field"><label>Source link (optional)</label><input id="f-source" value="${r?esc(r.source):''}" placeholder="https://..."></div>
     <div class="modal-actions">
       ${r ? `<button class="btn btn-danger" onclick="deleteRecipe('${r.id}')">Delete</button>` : ''}
@@ -397,6 +558,8 @@ function openRecipeForm(id){
         <button class="btn btn-primary" onclick="saveRecipe(${r?`'${r.id}'`:'null'})">Save</button>
       </div>
     </div>`);
+  formPhotos = r ? [...(r.photos || [])] : [];
+  renderPhotoStrip();
   document.getElementById('f-title').focus();
 }
 
@@ -408,7 +571,8 @@ function saveRecipe(id){
   const data = {
     title, time: v('f-time'), serves: v('f-serves'),
     tags: v('f-tags').split(',').map(s=>s.trim()).filter(Boolean),
-    ingredients: lines('f-ing'), steps: lines('f-steps'), source: v('f-source')
+    ingredients: lines('f-ing'), steps: lines('f-steps'), source: v('f-source'),
+    photos: formPhotos
   };
   if (id) Object.assign(db.recipes.find(r=>r.id===id), data);
   else db.recipes.push({ id: uid(), fav: false, ...data });
@@ -430,6 +594,7 @@ function openRecipeDetail(id){
       ${r.time ? `<span style="display:inline-flex;align-items:center;gap:5px">${ICON_CLOCK} ${esc(r.time)}</span>` : ''}
       ${r.serves ? `<span style="display:inline-flex;align-items:center;gap:5px">${ICON_USERS} Serves ${esc(r.serves)}</span>` : ''}
     </div>
+    ${(r.photos||[]).length ? `<div class="detail-section"><div class="detail-photos">${r.photos.map(u=>`<img src="${esc(u)}" alt="">`).join('')}</div></div>` : ''}
     ${r.ingredients.length ? `<div class="detail-section"><div class="label">Ingredients</div><ul>${r.ingredients.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>` : ''}
     ${r.steps.length ? `<div class="detail-section"><div class="label">Steps</div><ol>${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>` : ''}
     ${r.source ? `<div class="detail-section"><div class="label">Source</div><a href="${esc(r.source)}" target="_blank" rel="noopener">${ICON_LINK} Open source</a></div>` : ''}
@@ -647,6 +812,7 @@ function importData(input){
 }
 
 render();
+initSync();
 </script>
 </body>
 </html>
