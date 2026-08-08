@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crew Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto+Mono:wght@400;700&family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bgMain:#F7F3EE;--bgPanel:#FFFFFF;--bgCard:#FFFFFF;
+  --accentBlue:#6366f1;--accentBlueHover:#4f46e5;--accentPurple:#a855f7;
+  --accentGreen:#10b981;--accentRed:#ef4444;--accentYellow:#f59e0b;
+  --textPrimary:#1C1917;--textSecondary:#57534E;--textWarm:#2A2520;
+  --textWarmSecondary:#7C6F5A;--textWarmMuted:#A0937B;
+  --borderColor:#E8E0D2;--borderSubtle:#F0EBE3;
+  --indigo-2:#818CF8;--indigo-soft:rgba(99,102,241,0.09);--indigo-line:rgba(99,102,241,0.30);
+  --amber:#B4791F;--amber-soft:#FBF3E2;--amber-line:#EBD9A8;--line:#DDD1C3;
+  --shadow-sm:0 1px 2px rgba(17,17,17,0.04),0 1px 3px rgba(17,17,17,0.06);
+  --shadow-md:0 4px 12px rgba(17,17,17,0.06),0 2px 4px rgba(17,17,17,0.04);
+  --shadow-lg:0 16px 40px rgba(17,17,17,0.10),0 4px 12px rgba(17,17,17,0.06);
+  --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+  --font-serif:'Roboto Serif',Georgia,Cambria,serif;
+  --font-mono:'Roboto Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bgMain);font-family:var(--font-sans);color:var(--textPrimary);font-size:16px;line-height:1.55;min-height:100vh}
+button{font-family:var(--font-sans);cursor:pointer}
+input,select,textarea{font-family:var(--font-sans);font-size:16px;color:var(--textPrimary)}
+
+.hero{background:linear-gradient(150deg,#4F46E5 0%,#6366F1 100%);color:#fff;padding:52px 24px 96px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,0.06) 1px,transparent 2px);background-size:40px 40px;pointer-events:none}
+.hero .kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:0.34em;text-transform:uppercase;opacity:.9}
+.hero h1{font-family:var(--font-serif);font-size:2.7rem;letter-spacing:-.5px;line-height:1.08;margin:10px 0 8px}
+.hero .sub{font-size:.95rem;opacity:.85;max-width:480px;margin:0 auto}
+.hero .badges{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.hero .badges span{background:rgba(255,255,255,.18);padding:6px 13px;border-radius:20px;font-size:.72rem;font-weight:600;font-variant-numeric:tabular-nums}
+
+.wrap{max-width:960px;margin:-56px auto 60px;padding:0 20px;position:relative;z-index:2}
+
+.tabs{display:flex;gap:8px;background:var(--bgPanel);border:1px solid var(--borderColor);border-radius:14px;padding:6px;box-shadow:var(--shadow-md);margin-bottom:22px}
+.tab{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 8px;border:none;background:transparent;border-radius:10px;font-size:.9rem;font-weight:600;color:var(--textWarmSecondary);transition:background .15s,color .15s}
+.tab.active{background:var(--accentBlue);color:#fff}
+.tab:not(.active):hover{background:var(--indigo-soft);color:var(--accentBlue)}
+
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search{flex:1;min-width:200px;position:relative}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--textWarmMuted)}
+.search input{width:100%;padding:11px 12px 11px 40px;border:1px solid var(--borderColor);border-radius:10px;background:var(--bgPanel)}
+.search input:focus{outline:none;border-color:var(--indigo-line)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:10px;font-size:.9rem;font-weight:600;border:1px solid transparent;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--accentBlue);color:#fff}
+.btn-primary:hover{background:var(--accentBlueHover);box-shadow:var(--shadow-md)}
+.btn-ghost{background:var(--bgPanel);border-color:var(--borderColor);color:var(--textWarm)}
+.btn-ghost:hover{border-color:var(--indigo-line);color:var(--accentBlue)}
+.btn-danger{background:transparent;border-color:transparent;color:var(--accentRed)}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{padding:6px 14px;border-radius:20px;border:1px solid var(--borderColor);background:var(--bgPanel);font-size:.78rem;font-weight:600;color:var(--textWarmSecondary);transition:all .15s}
+.chip.active{background:var(--indigo-soft);border-color:var(--indigo-line);color:var(--accentBlue)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.card{background:var(--bgCard);border:1px solid var(--borderColor);border-top:4px solid var(--accentBlue);border-radius:16px;padding:20px;box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .2s;animation:fadeUp .35s ease-out;cursor:pointer;display:flex;flex-direction:column;gap:10px}
+.card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}
+.card h3{font-family:var(--font-serif);font-size:1.15rem;color:var(--textWarm);letter-spacing:-.3px;line-height:1.25;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.card .meta{display:flex;gap:14px;font-family:var(--font-mono);font-size:.72rem;color:var(--textWarmMuted);text-transform:uppercase;letter-spacing:.06em}
+.card .meta span{display:inline-flex;align-items:center;gap:5px}
+.card .tags{display:flex;gap:6px;flex-wrap:wrap}
+.card .tags span{background:var(--indigo-soft);color:var(--accentBlue);padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.fav{color:var(--textWarmMuted);background:none;border:none;padding:2px;flex-shrink:0}
+.fav.on{color:var(--accentYellow)}
+
+.empty{text-align:center;padding:60px 20px;color:var(--textWarmSecondary)}
+.empty svg{color:var(--textWarmMuted);margin-bottom:14px}
+.empty p{font-size:.95rem;max-width:380px;margin:0 auto}
+
+.list-card{background:var(--bgCard);border:1px solid var(--borderColor);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow-sm);animation:fadeUp .35s ease-out;display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px;transition:transform .2s,box-shadow .2s}
+.list-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.list-card .when{font-family:var(--font-mono);font-size:.72rem;color:var(--textWarmMuted);text-transform:uppercase;letter-spacing:.06em}
+.list-card h4{font-family:var(--font-serif);font-size:1.05rem;color:var(--textWarm);margin:3px 0 4px}
+.list-card .note{font-size:.88rem;color:var(--textSecondary)}
+.stars{display:inline-flex;gap:2px;color:var(--accentYellow)}
+
+.status-pill{border:1px solid var(--borderColor);background:var(--bgPanel);padding:6px 14px;border-radius:20px;font-family:var(--font-mono);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:all .15s;flex-shrink:0}
+.status-planted{color:var(--amber);background:var(--amber-soft);border-color:var(--amber-line)}
+.status-growing{color:var(--accentBlue);background:var(--indigo-soft);border-color:var(--indigo-line)}
+.status-ready{color:#166534;background:rgba(16,185,129,0.14);border-color:rgba(16,185,129,0.35)}
+
+.modal-bg{position:fixed;inset:0;background:rgba(28,25,23,0.45);display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;z-index:50}
+.modal{background:var(--bgPanel);border-radius:16px;border-top:4px solid var(--accentBlue);box-shadow:var(--shadow-lg);width:100%;max-width:560px;padding:26px;animation:fadeUp .25s ease-out}
+.modal h2{font-family:var(--font-serif);font-size:1.5rem;color:var(--textWarm);letter-spacing:-.4px;margin-bottom:4px}
+.modal .kick{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accentBlue)}
+.field{margin-top:14px}
+.field label{display:block;font-size:.8rem;font-weight:600;color:var(--textWarmSecondary);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--borderColor);border-radius:10px;background:#fff}
+.field textarea{resize:vertical;min-height:74px;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--indigo-line)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px}
+.modal-actions .right{display:flex;gap:10px;margin-left:auto}
+
+.detail-section{margin-top:18px}
+.detail-section .label{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accentBlue);margin-bottom:8px}
+.detail-section ul,.detail-section ol{padding-left:22px;color:var(--textSecondary);font-size:.92rem}
+.detail-section li{margin-bottom:6px}
+.detail-section p{color:var(--textSecondary);font-size:.92rem}
+.detail-section a{color:var(--accentBlue);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+
+.rate-row{display:flex;gap:6px}
+.rate-row button{background:none;border:none;color:var(--line);padding:2px}
+.rate-row button.on{color:var(--accentYellow)}
+
+.footer{max-width:960px;margin:0 auto 40px;padding:0 20px;display:flex;justify-content:center;gap:14px}
+.footer button{background:none;border:none;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--textWarmMuted);display:inline-flex;align-items:center;gap:6px}
+.footer button:hover{color:var(--accentBlue)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+[hidden]{display:none!important}
+@media(max-width:600px){
+  .hero h1{font-size:2.1rem}
+  .hero{padding:40px 18px 88px}
+  .tab span{display:none}
+  .field-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="kicker">Cook · Log · Grow</div>
+  <h1>Crew Kitchen</h1>
+  <p class="sub">Your recipes, your cook nights, and the ingredients you're growing.</p>
+  <div class="badges">
+    <span id="badge-recipes">0 recipes</span>
+    <span id="badge-cooks">0 cooks logged</span>
+    <span id="badge-garden">0 in the garden</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="recipes">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Recipes</span>
+    </button>
+    <button class="tab" data-tab="cooklog">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5.78A7 7 0 0 1 19 10.6c0 2-1 3.4-2 3.4"/><path d="M7 5.78A7 7 0 0 0 5 10.6c0 2 1 3.4 2 3.4"/><path d="M8 2h8"/></svg>
+      <span>Cook Log</span>
+    </button>
+    <button class="tab" data-tab="garden">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M12 15a6 6 0 0 0 6-6V4a8 8 0 0 1-6 7"/><path d="M12 15a6 6 0 0 1-6-6V4a8 8 0 0 0 6 7"/></svg>
+      <span>Garden</span>
+    </button>
+  </nav>
+
+  <!-- RECIPES -->
+  <section id="panel-recipes">
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="recipe-search" placeholder="Search recipes or ingredients">
+      </div>
+      <button class="btn btn-primary" onclick="openRecipeForm()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Recipe
+      </button>
+    </div>
+    <div class="chips" id="recipe-chips"></div>
+    <div class="grid" id="recipe-grid"></div>
+    <div class="empty" id="recipe-empty" hidden>
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <p>No recipes yet. Add the first one the crew loves.</p>
+    </div>
+  </section>
+
+  <!-- COOK LOG -->
+  <section id="panel-cooklog" hidden>
+    <div class="toolbar">
+      <div style="flex:1"></div>
+      <button class="btn btn-primary" onclick="openCookForm()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Log a Cook
+      </button>
+    </div>
+    <div id="cook-list"></div>
+    <div class="empty" id="cook-empty" hidden>
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5.78A7 7 0 0 1 19 10.6c0 2-1 3.4-2 3.4"/><path d="M7 5.78A7 7 0 0 0 5 10.6c0 2 1 3.4 2 3.4"/><path d="M8 2h8"/></svg>
+      <p>Nothing logged yet. After tonight's dinner, record what you made and how it landed.</p>
+    </div>
+  </section>
+
+  <!-- GARDEN -->
+  <section id="panel-garden" hidden>
+    <div class="toolbar">
+      <div style="flex:1"></div>
+      <button class="btn btn-primary" onclick="openPlantForm()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Planting
+      </button>
+    </div>
+    <div id="plant-list"></div>
+    <div class="empty" id="plant-empty" hidden>
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M12 15a6 6 0 0 0 6-6V4a8 8 0 0 1-6 7"/><path d="M12 15a6 6 0 0 1-6-6V4a8 8 0 0 0 6 7"/></svg>
+      <p>Nothing growing yet. Add what you plant and tap the status as it comes along.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <button onclick="exportData()">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Backup
+  </button>
+  <button onclick="document.getElementById('import-file').click()">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Restore
+  </button>
+  <input type="file" id="import-file" accept=".json" hidden onchange="importData(this)">
+</footer>
+
+<div class="modal-bg" id="modal-bg" hidden><div class="modal" id="modal"></div></div>
+
+<script>
+/* ── Store: swap these two functions for Firebase later; everything else stays. ── */
+const Store = {
+  key: 'crew-kitchen-v1',
+  load() {
+    try { return JSON.parse(localStorage.getItem(this.key)) || { recipes: [], cooks: [], plants: [] }; }
+    catch { return { recipes: [], cooks: [], plants: [] }; }
+  },
+  save(d) { localStorage.setItem(this.key, JSON.stringify(d)); }
+};
+
+let db = Store.load();
+let activeTag = null;
+let searchQ = '';
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = iso => { const [y,m,d] = iso.split('-').map(Number); return new Date(y, m-1, d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+const today = () => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+function commit(){ Store.save(db); render(); }
+
+const ICON_CLOCK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+const ICON_USERS = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+const ICON_STAR = f => '<svg viewBox="0 0 24 24" width="16" height="16" fill="'+(f?'currentColor':'none')+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+const ICON_LINK = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+
+/* ── Tabs ── */
+document.getElementById('tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab'); if (!btn) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === btn));
+  ['recipes','cooklog','garden'].forEach(p => document.getElementById('panel-'+p).hidden = btn.dataset.tab !== p);
+});
+
+/* ── Render ── */
+function render(){
+  document.getElementById('badge-recipes').textContent = db.recipes.length + (db.recipes.length === 1 ? ' recipe' : ' recipes');
+  document.getElementById('badge-cooks').textContent = db.cooks.length + (db.cooks.length === 1 ? ' cook logged' : ' cooks logged');
+  document.getElementById('badge-garden').textContent = db.plants.length + ' in the garden';
+  renderRecipes(); renderCooks(); renderPlants();
+}
+
+function allTags(){ return [...new Set(db.recipes.flatMap(r => r.tags))].sort(); }
+
+function renderRecipes(){
+  const chips = document.getElementById('recipe-chips');
+  const tags = allTags();
+  chips.innerHTML = tags.map(t =>
+    `<button class="chip ${activeTag===t?'active':''}" onclick="toggleTag('${esc(t)}')">${esc(t)}</button>`).join('');
+  const q = searchQ.toLowerCase();
+  const list = db.recipes.filter(r =>
+    (!activeTag || r.tags.includes(activeTag)) &&
+    (!q || r.title.toLowerCase().includes(q) || r.ingredients.join(' ').toLowerCase().includes(q))
+  ).sort((a,b) => (b.fav - a.fav) || a.title.localeCompare(b.title));
+  const grid = document.getElementById('recipe-grid');
+  grid.innerHTML = list.map(r => `
+    <div class="card" onclick="openRecipeDetail('${r.id}')">
+      <h3>${esc(r.title)}
+        <button class="fav ${r.fav?'on':''}" onclick="event.stopPropagation();toggleFav('${r.id}')" aria-label="Favorite">${ICON_STAR(r.fav)}</button>
+      </h3>
+      <div class="meta">
+        ${r.time ? `<span>${ICON_CLOCK} ${esc(r.time)}</span>` : ''}
+        ${r.serves ? `<span>${ICON_USERS} Serves ${esc(r.serves)}</span>` : ''}
+      </div>
+      ${r.tags.length ? `<div class="tags">${r.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div>` : ''}
+    </div>`).join('');
+  document.getElementById('recipe-empty').hidden = db.recipes.length > 0;
+}
+
+function renderCooks(){
+  const list = [...db.cooks].sort((a,b) => b.date.localeCompare(a.date));
+  document.getElementById('cook-list').innerHTML = list.map(c => `
+    <div class="list-card" style="cursor:default">
+      <div>
+        <div class="when">${fmtDate(c.date)}</div>
+        <h4>${esc(c.dish)}</h4>
+        ${c.notes ? `<div class="note">${esc(c.notes)}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <span class="stars">${[1,2,3,4,5].map(n=>ICON_STAR(n<=c.rating)).join('')}</span>
+        <button class="btn-danger" style="padding:0;border:none;background:none;font-size:.75rem;font-weight:600" onclick="deleteCook('${c.id}')">Remove</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('cook-empty').hidden = db.cooks.length > 0;
+}
+
+const PLANT_STATUSES = ['Planted','Growing','Ready'];
+function renderPlants(){
+  const list = [...db.plants].sort((a,b) => PLANT_STATUSES.indexOf(b.status) - PLANT_STATUSES.indexOf(a.status) || a.name.localeCompare(b.name));
+  document.getElementById('plant-list').innerHTML = list.map(p => `
+    <div class="list-card" style="cursor:default;align-items:center">
+      <div>
+        <h4 style="margin-top:0">${esc(p.name)}</h4>
+        <div class="when">${esc(p.where)}${p.date ? ' · planted ' + fmtDate(p.date) : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="status-pill status-${p.status.toLowerCase()}" onclick="cyclePlant('${p.id}')">${p.status}</button>
+        <button class="btn-danger" style="padding:0;border:none;background:none;font-size:.75rem;font-weight:600" onclick="deletePlant('${p.id}')">Remove</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('plant-empty').hidden = db.plants.length > 0;
+}
+
+/* ── Actions ── */
+function toggleTag(t){ activeTag = activeTag === t ? null : t; renderRecipes(); }
+function toggleFav(id){ const r = db.recipes.find(r=>r.id===id); r.fav = !r.fav; commit(); }
+function deleteCook(id){ if(confirm('Remove this cook log entry?')){ db.cooks = db.cooks.filter(c=>c.id!==id); commit(); } }
+function deletePlant(id){ if(confirm('Remove this planting?')){ db.plants = db.plants.filter(p=>p.id!==id); commit(); } }
+function cyclePlant(id){ const p = db.plants.find(p=>p.id===id); p.status = PLANT_STATUSES[(PLANT_STATUSES.indexOf(p.status)+1) % PLANT_STATUSES.length]; commit(); }
+document.getElementById('recipe-search').addEventListener('input', e => { searchQ = e.target.value; renderRecipes(); });
+
+/* ── Modal helpers ── */
+const modalBg = document.getElementById('modal-bg');
+const modal = document.getElementById('modal');
+function openModal(html){ modal.innerHTML = html; modalBg.hidden = false; document.body.style.overflow = 'hidden'; }
+function closeModal(){ modalBg.hidden = true; modal.innerHTML = ''; document.body.style.overflow = ''; }
+modalBg.addEventListener('click', e => { if (e.target === modalBg) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modalBg.hidden) closeModal(); });
+
+/* ── Recipe form + detail ── */
+function openRecipeForm(id){
+  const r = id ? db.recipes.find(r=>r.id===id) : null;
+  openModal(`
+    <div class="kick">${r ? 'Edit Recipe' : 'New Recipe'}</div>
+    <h2>${r ? esc(r.title) : 'Add a recipe'}</h2>
+    <div class="field"><label>Title</label><input id="f-title" value="${r?esc(r.title):''}" placeholder="Sunday red sauce"></div>
+    <div class="field-row">
+      <div class="field"><label>Time</label><input id="f-time" value="${r?esc(r.time):''}" placeholder="45 min"></div>
+      <div class="field"><label>Serves</label><input id="f-serves" value="${r?esc(r.serves):''}" placeholder="5"></div>
+    </div>
+    <div class="field"><label>Tags (comma separated)</label><input id="f-tags" value="${r?esc(r.tags.join(', ')):''}" placeholder="pasta, weeknight, crew favorite"></div>
+    <div class="field"><label>Ingredients (one per line)</label><textarea id="f-ing" placeholder="2 lb tomatoes&#10;1 head garlic">${r?esc(r.ingredients.join('\n')):''}</textarea></div>
+    <div class="field"><label>Steps (one per line)</label><textarea id="f-steps" placeholder="Roast the tomatoes&#10;Simmer 30 min">${r?esc(r.steps.join('\n')):''}</textarea></div>
+    <div class="field"><label>Source link (optional)</label><input id="f-source" value="${r?esc(r.source):''}" placeholder="https://..."></div>
+    <div class="modal-actions">
+      ${r ? `<button class="btn btn-danger" onclick="deleteRecipe('${r.id}')">Delete</button>` : ''}
+      <div class="right">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveRecipe(${r?`'${r.id}'`:'null'})">Save</button>
+      </div>
+    </div>`);
+  document.getElementById('f-title').focus();
+}
+
+function saveRecipe(id){
+  const v = x => document.getElementById(x).value.trim();
+  const lines = x => v(x).split('\n').map(s=>s.trim()).filter(Boolean);
+  const title = v('f-title');
+  if (!title) { document.getElementById('f-title').focus(); return; }
+  const data = {
+    title, time: v('f-time'), serves: v('f-serves'),
+    tags: v('f-tags').split(',').map(s=>s.trim()).filter(Boolean),
+    ingredients: lines('f-ing'), steps: lines('f-steps'), source: v('f-source')
+  };
+  if (id) Object.assign(db.recipes.find(r=>r.id===id), data);
+  else db.recipes.push({ id: uid(), fav: false, ...data });
+  closeModal(); commit();
+}
+
+function deleteRecipe(id){
+  if (!confirm('Delete this recipe?')) return;
+  db.recipes = db.recipes.filter(r=>r.id!==id);
+  closeModal(); commit();
+}
+
+function openRecipeDetail(id){
+  const r = db.recipes.find(r=>r.id===id);
+  openModal(`
+    <div class="kick">Recipe</div>
+    <h2>${esc(r.title)}</h2>
+    <div class="meta" style="display:flex;gap:14px;font-family:var(--font-mono);font-size:.72rem;color:var(--textWarmMuted);text-transform:uppercase;letter-spacing:.06em;margin-top:6px">
+      ${r.time ? `<span style="display:inline-flex;align-items:center;gap:5px">${ICON_CLOCK} ${esc(r.time)}</span>` : ''}
+      ${r.serves ? `<span style="display:inline-flex;align-items:center;gap:5px">${ICON_USERS} Serves ${esc(r.serves)}</span>` : ''}
+    </div>
+    ${r.ingredients.length ? `<div class="detail-section"><div class="label">Ingredients</div><ul>${r.ingredients.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>` : ''}
+    ${r.steps.length ? `<div class="detail-section"><div class="label">Steps</div><ol>${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>` : ''}
+    ${r.source ? `<div class="detail-section"><div class="label">Source</div><a href="${esc(r.source)}" target="_blank" rel="noopener">${ICON_LINK} Open source</a></div>` : ''}
+    <div class="modal-actions">
+      <div class="right">
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+        <button class="btn btn-primary" onclick="openRecipeForm('${r.id}')">Edit</button>
+      </div>
+    </div>`);
+}
+
+/* ── Cook form ── */
+function openCookForm(){
+  const options = [...db.recipes].sort((a,b)=>a.title.localeCompare(b.title))
+    .map(r=>`<option value="${esc(r.title)}"></option>`).join('');
+  openModal(`
+    <div class="kick">Cook Log</div>
+    <h2>Log a cook</h2>
+    <div class="field"><label>What you made</label><input id="f-dish" list="dish-list" placeholder="Pick a recipe or type anything"><datalist id="dish-list">${options}</datalist></div>
+    <div class="field"><label>Date</label><input id="f-date" type="date" value="${today()}"></div>
+    <div class="field"><label>How it landed</label>
+      <div class="rate-row" id="rate-row">${[1,2,3,4,5].map(n=>`<button data-n="${n}" aria-label="${n} stars">${ICON_STAR(false)}</button>`).join('')}</div>
+    </div>
+    <div class="field"><label>Notes (optional)</label><textarea id="f-notes" placeholder="Crew went back for thirds. More garlic next time."></textarea></div>
+    <div class="modal-actions">
+      <div class="right">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCook()">Save</button>
+      </div>
+    </div>`);
+  let rating = 0;
+  const row = document.getElementById('rate-row');
+  row.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    rating = Number(b.dataset.n);
+    row.querySelectorAll('button').forEach(btn => {
+      const on = Number(btn.dataset.n) <= rating;
+      btn.classList.toggle('on', on);
+      btn.innerHTML = ICON_STAR(on);
+    });
+  });
+  row.dataset.get = '';
+  window._getRating = () => rating;
+  document.getElementById('f-dish').focus();
+}
+
+function saveCook(){
+  const dish = document.getElementById('f-dish').value.trim();
+  if (!dish) { document.getElementById('f-dish').focus(); return; }
+  db.cooks.push({
+    id: uid(), dish,
+    date: document.getElementById('f-date').value || today(),
+    rating: window._getRating(),
+    notes: document.getElementById('f-notes').value.trim()
+  });
+  closeModal(); commit();
+}
+
+/* ── Plant form ── */
+function openPlantForm(){
+  openModal(`
+    <div class="kick">Garden</div>
+    <h2>Add a planting</h2>
+    <div class="field"><label>What is it</label><input id="f-plant" placeholder="Basil"></div>
+    <div class="field-row">
+      <div class="field"><label>Where</label><input id="f-where" placeholder="Back bed, kitchen pot..."></div>
+      <div class="field"><label>Planted on</label><input id="f-pdate" type="date" value="${today()}"></div>
+    </div>
+    <div class="modal-actions">
+      <div class="right">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="savePlant()">Save</button>
+      </div>
+    </div>`);
+  document.getElementById('f-plant').focus();
+}
+
+function savePlant(){
+  const name = document.getElementById('f-plant').value.trim();
+  if (!name) { document.getElementById('f-plant').focus(); return; }
+  db.plants.push({
+    id: uid(), name,
+    where: document.getElementById('f-where').value.trim(),
+    date: document.getElementById('f-pdate').value,
+    status: 'Planted'
+  });
+  closeModal(); commit();
+}
+
+/* ── Backup / restore ── */
+function exportData(){
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'crew-kitchen-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importData(input){
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const d = JSON.parse(reader.result);
+      if (!Array.isArray(d.recipes) || !Array.isArray(d.cooks) || !Array.isArray(d.plants)) throw new Error('bad shape');
+      if (confirm('Replace everything with this backup?')) { db = d; commit(); }
+    } catch { alert('That file is not a Crew Kitchen backup.'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+render();
+</script>
+</body>
+</html>
