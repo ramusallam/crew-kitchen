@@ -71,6 +71,12 @@ input,select,textarea{font-family:var(--font-sans);font-size:16px;color:var(--te
 .fav{color:var(--textWarmMuted);background:none;border:none;padding:2px;flex-shrink:0}
 .fav.on{color:var(--accentYellow)}
 
+.find-status{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--textWarmMuted);margin:2px 0 14px;min-height:1em}
+.find-card{padding:0;overflow:hidden}
+.find-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--borderSubtle)}
+.find-card .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:60px 20px;color:var(--textWarmSecondary)}
 .empty svg{color:var(--textWarmMuted);margin-bottom:14px}
 .empty p{font-size:.95rem;max-width:380px;margin:0 auto}
@@ -144,6 +150,10 @@ input,select,textarea{font-family:var(--font-sans);font-size:16px;color:var(--te
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       <span>Recipes</span>
     </button>
+    <button class="tab" data-tab="find">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      <span>Find</span>
+    </button>
     <button class="tab" data-tab="cooklog">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5.78A7 7 0 0 1 19 10.6c0 2-1 3.4-2 3.4"/><path d="M7 5.78A7 7 0 0 0 5 10.6c0 2 1 3.4 2 3.4"/><path d="M8 2h8"/></svg>
       <span>Cook Log</span>
@@ -171,6 +181,33 @@ input,select,textarea{font-family:var(--font-sans);font-size:16px;color:var(--te
     <div class="empty" id="recipe-empty" hidden>
       <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       <p>No recipes yet. Add the first one the crew loves.</p>
+    </div>
+  </section>
+
+  <!-- FIND -->
+  <section id="panel-find" hidden>
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="find-input" placeholder="Search the web: a dish or an ingredient">
+      </div>
+      <button class="btn btn-primary" onclick="runFind()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        Search
+      </button>
+    </div>
+    <div class="toolbar" style="margin-top:-6px">
+      <div class="search">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <input type="url" id="link-input" placeholder="Or paste a recipe link from any site">
+      </div>
+      <button class="btn btn-ghost" onclick="importLink()">Import</button>
+    </div>
+    <div id="find-status" class="find-status"></div>
+    <div class="grid" id="find-grid"></div>
+    <div class="empty" id="find-empty">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      <p>Search any dish or ingredient, or paste a recipe link. Anything you import lands in Recipes.</p>
     </div>
   </section>
 
@@ -250,7 +287,7 @@ const ICON_LINK = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" s
 document.getElementById('tabs').addEventListener('click', e => {
   const btn = e.target.closest('.tab'); if (!btn) return;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === btn));
-  ['recipes','cooklog','garden'].forEach(p => document.getElementById('panel-'+p).hidden = btn.dataset.tab !== p);
+  ['recipes','find','cooklog','garden'].forEach(p => document.getElementById('panel-'+p).hidden = btn.dataset.tab !== p);
 });
 
 /* ── Render ── */
@@ -480,6 +517,110 @@ function savePlant(){
     status: 'Planted'
   });
   closeModal(); commit();
+}
+
+/* ── Find: web search (TheMealDB) + link import (serverless) ── */
+const MEALDB = 'https://www.themealdb.com/api/json/v1/1/';
+const IMPORT_API = location.hostname === 'localhost' ? 'https://crew-kitchen.vercel.app/api/import' : '/api/import';
+let findResults = [];
+
+function setFindStatus(msg){ document.getElementById('find-status').textContent = msg; }
+
+async function runFind(){
+  const q = document.getElementById('find-input').value.trim();
+  if (!q) { document.getElementById('find-input').focus(); return; }
+  document.getElementById('find-empty').hidden = true;
+  document.getElementById('find-grid').innerHTML = '';
+  setFindStatus('Searching...');
+  try {
+    const [byName, byIng] = await Promise.all([
+      fetch(MEALDB + 'search.php?s=' + encodeURIComponent(q)).then(r=>r.json()).catch(()=>({meals:null})),
+      fetch(MEALDB + 'filter.php?i=' + encodeURIComponent(q)).then(r=>r.json()).catch(()=>({meals:null}))
+    ]);
+    const seen = new Set();
+    findResults = [...(byName.meals||[]), ...(byIng.meals||[])]
+      .filter(m => !seen.has(m.idMeal) && seen.add(m.idMeal)).slice(0, 24);
+    setFindStatus(findResults.length ? findResults.length + ' found' : 'No matches. Try another word, or paste a link.');
+    document.getElementById('find-grid').innerHTML = findResults.map(m => `
+      <div class="card find-card" onclick="openFindDetail('${m.idMeal}')">
+        <img src="${esc(m.strMealThumb)}/medium" alt="" loading="lazy">
+        <div class="body">
+          <h3>${esc(m.strMeal)}</h3>
+          ${m.strArea || m.strCategory ? `<div class="meta"><span>${esc([m.strArea, m.strCategory].filter(Boolean).join(' · '))}</span></div>` : ''}
+        </div>
+      </div>`).join('');
+  } catch { setFindStatus('Search is unreachable right now. Try again in a minute.'); }
+}
+document.getElementById('find-input').addEventListener('keydown', e => { if (e.key === 'Enter') runFind(); });
+document.getElementById('link-input').addEventListener('keydown', e => { if (e.key === 'Enter') importLink(); });
+
+function mealToRecipe(m){
+  const ingredients = [];
+  for (let i = 1; i <= 20; i++) {
+    const ing = (m['strIngredient'+i] || '').trim();
+    if (!ing) continue;
+    const meas = (m['strMeasure'+i] || '').trim();
+    ingredients.push(meas ? meas + ' ' + ing : ing);
+  }
+  return {
+    title: m.strMeal,
+    time: '', serves: '',
+    tags: [m.strArea, m.strCategory].filter(Boolean).map(s=>s.toLowerCase()),
+    ingredients,
+    steps: (m.strInstructions || '').split(/\r?\n+/).map(s=>s.trim().replace(/^STEP \d+[.:]?\s*/i,'')).filter(Boolean),
+    source: m.strSource || 'https://www.themealdb.com/meal/' + m.idMeal
+  };
+}
+
+async function openFindDetail(id){
+  setFindStatus('Loading recipe...');
+  try {
+    const data = await fetch(MEALDB + 'lookup.php?i=' + id).then(r=>r.json());
+    const m = data.meals && data.meals[0];
+    if (!m) { setFindStatus('Could not load that one.'); return; }
+    setFindStatus(findResults.length + ' found');
+    const r = mealToRecipe(m);
+    openModal(`
+      <div class="kick">From the Web</div>
+      <h2>${esc(r.title)}</h2>
+      ${r.tags.length ? `<div class="tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${r.tags.map(t=>`<span style="background:var(--indigo-soft);color:var(--accentBlue);padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600">${esc(t)}</span>`).join('')}</div>` : ''}
+      <div class="detail-section"><div class="label">Ingredients</div><ul>${r.ingredients.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>
+      <div class="detail-section"><div class="label">Steps</div><ol>${r.steps.slice(0,4).map(s=>`<li>${esc(s)}</li>`).join('')}${r.steps.length>4?`<li style="list-style:none;color:var(--textWarmMuted)">+ ${r.steps.length-4} more after import</li>`:''}</ol></div>
+      <div class="modal-actions">
+        <div class="right">
+          <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+          <button class="btn btn-primary" id="import-btn">Add to My Recipes</button>
+        </div>
+      </div>`);
+    document.getElementById('import-btn').addEventListener('click', () => finishImport(r));
+  } catch { setFindStatus('Could not load that one. Try again.'); }
+}
+
+function finishImport(r){
+  const id = uid();
+  db.recipes.push({ id, fav: false, ...r });
+  closeModal(); commit();
+  document.querySelector('[data-tab="recipes"]').click();
+}
+
+async function importLink(){
+  const input = document.getElementById('link-input');
+  const url = input.value.trim();
+  if (!url) { input.focus(); return; }
+  document.getElementById('find-empty').hidden = true;
+  setFindStatus('Reading that page...');
+  try {
+    const res = await fetch(IMPORT_API + '?url=' + encodeURIComponent(url));
+    const data = await res.json();
+    if (!res.ok) { setFindStatus(data.error || 'Could not read that page.'); return; }
+    setFindStatus('');
+    input.value = '';
+    const id = uid();
+    db.recipes.push({ id, fav: false, ...data });
+    Store.save(db); render();
+    document.querySelector('[data-tab="recipes"]').click();
+    openRecipeForm(id);
+  } catch { setFindStatus('Could not reach the importer. Check the link and try again.'); }
 }
 
 /* ── Backup / restore ── */
